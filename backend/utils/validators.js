@@ -33,7 +33,7 @@ const validate = (req, res, next) => {
         .map((err) => ({ field: err.path, message: err.msg })),
     });
   }
-  next();
+  // next();
 };
 
 module.exports = {
