@@ -10,7 +10,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import OTPVerification from "../components/OTPVerification";
-import axios from "axios";
+import api from "../utils/api";
 import "../styles/RegisterPage.css";
 
 const RegisterPage = () => {
@@ -26,7 +26,7 @@ const RegisterPage = () => {
   const [showOTP, setShowOTP] = useState(false);
   const [registrationEmail, setRegistrationEmail] = useState("");
 
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -80,15 +80,12 @@ const RegisterPage = () => {
     setIsLoading(true);
     try {
       // Send OTP to email
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/send-otp",
-        {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        },
-      );
+      const response = await api.post("/api/auth/send-otp", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
 
       if (response.data.success) {
         setRegistrationEmail(formData.email);
@@ -105,26 +102,16 @@ const RegisterPage = () => {
 
   const handleVerifyOTP = async (otp) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/verify-otp",
-        {
-          email: registrationEmail,
-          otp: otp,
-        },
-      );
-
+      const response = await api.post("/api/auth/verify-otp", {
+        email: registrationEmail,
+        otp,
+      });
       if (response.data.success) {
-        // Automatically log in the user after successful verification
         const { token, ...userInfo } = response.data.data;
         localStorage.setItem("user", JSON.stringify({ ...userInfo, token }));
-
-        // Set auth token in axios defaults
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        // Update auth context
-        const { login } = useAuth();
         await login(registrationEmail, formData.password);
-
         navigate("/dashboard");
       }
     } catch (error) {
@@ -134,7 +121,7 @@ const RegisterPage = () => {
 
   const handleResendOTP = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/resend-otp", {
+      await api.post("/api/auth/resend-otp", {
         email: registrationEmail,
       });
     } catch (error) {

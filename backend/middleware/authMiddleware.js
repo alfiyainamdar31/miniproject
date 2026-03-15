@@ -22,7 +22,7 @@ const protect = async (req, res, next) => {
         });
       }
 
-      // next();
+      next();
     } catch (error) {
       console.error(error);
       return res.status(401).json({
@@ -56,7 +56,7 @@ const authorize = (...roles) => {
         message: `Role ${req.user.role} is not authorized to access this route`,
       });
     }
-    // next();
+    next();
   };
 };
 

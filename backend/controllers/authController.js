@@ -3,20 +3,11 @@ const generateToken = require("../utils/generateToken");
 const { generateOTP, generateOTPExpiry } = require("../utils/otpGenerator");
 const { sendOTPEmail } = require("../services/emailService");
 
-// Send OTP for registration
+// Send OTP
 const sendRegistrationOTP = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    console.log("Sending OTP for:", email);
-    console.log("Request body:", {
-      name,
-      email,
-      password: password ? "provided" : "missing",
-      role,
-    });
-
-    // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -24,9 +15,7 @@ const sendRegistrationOTP = async (req, res) => {
       });
     }
 
-    // Check if user already exists and is verified
     const existingUser = await User.findOne({ email });
-    console.log("Existing user found:", existingUser ? "Yes" : "No");
 
     if (existingUser && existingUser.isEmailVerified) {
       return res.status(400).json({
@@ -38,11 +27,8 @@ const sendRegistrationOTP = async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
     const otpExpiry = generateOTPExpiry(10); // 10 minutes expiry
-    console.log("Generated OTP:", otp);
 
-    // If user exists but not verified, update
     if (existingUser) {
-      console.log("Updating existing unverified user");
       existingUser.name = name;
       existingUser.password = password;
       existingUser.role = role || "reader";
@@ -51,10 +37,7 @@ const sendRegistrationOTP = async (req, res) => {
       existingUser.tempRegistrationData = { name, email, password, role };
 
       await existingUser.save();
-      console.log("Updated existing unverified user successfully");
-    }
-    // Create new user (not verified yet)
-    else {
+    } else {
       console.log("Creating new user");
       const newUser = new User({
         name,
@@ -72,7 +55,6 @@ const sendRegistrationOTP = async (req, res) => {
     }
 
     // Send OTP via email
-    console.log("Attempting to send OTP email to:", email);
     await sendOTPEmail(email, name, otp);
     console.log("OTP email sent successfully");
 
@@ -108,12 +90,10 @@ const sendRegistrationOTP = async (req, res) => {
   }
 };
 
-// Verify OTP and complete registration
+// Verify OTP
 const verifyOTPAndRegister = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
-    console.log("Verifying OTP for:", email);
 
     // Find user by email
     const user = await User.findOne({ email }).select(
@@ -238,7 +218,6 @@ const resendOTP = async (req, res) => {
   }
 };
 
-// ... rest of your controller functions remain the same
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
